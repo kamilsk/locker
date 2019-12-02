@@ -1,9 +1,7 @@
 package locker
 
 import (
-	"encoding/hex"
 	"hash"
-	"math/big"
 	"sync"
 )
 
@@ -18,11 +16,9 @@ type multimx struct {
 
 func (mx multimx) ByFingerprint(fingerprint []byte) *sync.Mutex {
 	_, _ = mx.hash.Write(fingerprint)
-	base := big.NewInt(0)
-	_, _ = base.SetString(hex.EncodeToString(mx.hash.Sum(nil)), 16)
+	shard := BytesToUint64Mod(mx.hash.Sum(nil), uint64(len(mx.set)))
 	mx.hash.Reset()
-	shard := big.NewInt(0).Mod(base, big.NewInt(int64(len(mx.set))))
-	return mx.ByVirtualShard(shard.Uint64())
+	return mx.ByVirtualShard(shard)
 }
 
 func (mx multimx) ByKey(key string) *sync.Mutex {
