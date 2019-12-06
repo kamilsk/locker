@@ -29,7 +29,7 @@ func TestShardNumberCalculation(t *testing.T) {
 		"sum128":  fnv.New128(),
 		"sum128a": fnv.New128a(),
 	}
-	size := uint64(math.MaxUint32)
+	size := uint64(math.MaxUint64)
 	for name, checksum := range sources {
 		t.Run(name, func(t *testing.T) {
 			for _, key := range keys {
@@ -53,66 +53,66 @@ func TestShardNumberCalculation(t *testing.T) {
 	}
 }
 
-// BenchmarkShardNumberCalculation/naive,md5:darwin-4         	 1377596	       818 ns/op	     216 B/op	       8 allocs/op
-// BenchmarkShardNumberCalculation/naive,md5:amd64-4          	 1392057	       845 ns/op	     216 B/op	       8 allocs/op
-// BenchmarkShardNumberCalculation/naive,sha1:darwin-4        	 1225707	       957 ns/op	     264 B/op	       8 allocs/op
-// BenchmarkShardNumberCalculation/naive,sha1:amd64-4         	 1253956	       950 ns/op	     264 B/op	       8 allocs/op
-// BenchmarkShardNumberCalculation/naive,sha256:darwin-4      	  846073	      1284 ns/op	     296 B/op	       8 allocs/op
-// BenchmarkShardNumberCalculation/naive,sha256:amd64-4       	  819980	      1295 ns/op	     296 B/op	       8 allocs/op
-// BenchmarkShardNumberCalculation/naive,sha512:darwin-4      	  520620	      2729 ns/op	     552 B/op	       9 allocs/op
-// BenchmarkShardNumberCalculation/naive,sha512:amd64-4       	  449974	      2840 ns/op	     552 B/op	       9 allocs/op
-// BenchmarkShardNumberCalculation/naive,sum32:darwin-4       	 2967585	       393 ns/op	      72 B/op	       6 allocs/op
-// BenchmarkShardNumberCalculation/naive,sum32:amd64-4        	 3158434	       378 ns/op	      72 B/op	       6 allocs/op
-// BenchmarkShardNumberCalculation/naive,sum32a:darwin-4      	 3147517	       375 ns/op	      72 B/op	       6 allocs/op
-// BenchmarkShardNumberCalculation/naive,sum32a:amd64-4       	 3152670	       380 ns/op	      72 B/op	       6 allocs/op
-// BenchmarkShardNumberCalculation/naive,sum64:darwin-4       	 1737346	       713 ns/op	     144 B/op	       8 allocs/op
-// BenchmarkShardNumberCalculation/naive,sum64:amd64-4        	 1649262	       799 ns/op	     144 B/op	       8 allocs/op
-// BenchmarkShardNumberCalculation/naive,sum64a:darwin-4      	 1982733	       554 ns/op	     144 B/op	       8 allocs/op
-// BenchmarkShardNumberCalculation/naive,sum64a:amd64-4       	 2150758	       554 ns/op	     144 B/op	       8 allocs/op
-// BenchmarkShardNumberCalculation/naive,sum128:darwin-4      	 1463527	       819 ns/op	     216 B/op	       8 allocs/op
-// BenchmarkShardNumberCalculation/naive,sum128:amd64-4       	 1326205	      1014 ns/op	     216 B/op	       8 allocs/op
-// BenchmarkShardNumberCalculation/naive,sum128a:darwin-4     	 1332231	       914 ns/op	     216 B/op	       8 allocs/op
-// BenchmarkShardNumberCalculation/naive,sum128a:amd64-4      	 1346344	      1084 ns/op	     216 B/op	       8 allocs/op
-// BenchmarkShardNumberCalculation/simple,md5:darwin-4        	 4558246	       397 ns/op	     112 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,md5:amd64-4         	 3068404	       396 ns/op	     112 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,sha1:darwin-4       	 4375424	       486 ns/op	     144 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,sha1:amd64-4        	 4332129	       401 ns/op	     144 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,sha256:darwin-4     	 3926182	       297 ns/op	     144 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,sha256:amd64-4      	 4037755	       284 ns/op	     144 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,sha512:darwin-4     	 2294641	       442 ns/op	     208 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,sha512:amd64-4      	 2610360	       486 ns/op	     208 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,sum32:darwin-4      	 8728225	       158 ns/op	      24 B/op	       3 allocs/op
-// BenchmarkShardNumberCalculation/simple,sum32:amd64-4       	 7804992	       136 ns/op	      24 B/op	       3 allocs/op
-// BenchmarkShardNumberCalculation/simple,sum32a:darwin-4     	 9531890	       122 ns/op	      24 B/op	       3 allocs/op
-// BenchmarkShardNumberCalculation/simple,sum32a:amd64-4      	 9003367	       122 ns/op	      24 B/op	       3 allocs/op
-// BenchmarkShardNumberCalculation/simple,sum64:darwin-4      	 7476349	       155 ns/op	      32 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,sum64:amd64-4       	 7506585	       174 ns/op	      32 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,sum64a:darwin-4     	 6965594	       159 ns/op	      32 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,sum64a:amd64-4      	 6831498	       157 ns/op	      32 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,sum128:darwin-4     	 5479737	       215 ns/op	     112 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,sum128:amd64-4      	 5423877	       269 ns/op	     112 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,sum128a:darwin-4    	 5247582	       338 ns/op	     112 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/simple,sum128a:amd64-4     	 5239660	       214 ns/op	     112 B/op	       4 allocs/op
-// BenchmarkShardNumberCalculation/fast,md5:darwin-4          	 4624431	       256 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,md5:amd64-4           	 4640300	       255 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sha1:darwin-4         	 3090070	       366 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sha1:amd64-4          	 3723790	       339 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sha256:darwin-4       	 2247442	       532 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sha256:amd64-4        	 2209219	       581 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sha512:darwin-4       	 1042747	      1158 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sha512:amd64-4        	 1000000	      1105 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sum32:darwin-4        	15295339	        70.8 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sum32:amd64-4         	16811192	        67.1 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sum32a:darwin-4       	17580582	        66.6 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sum32a:amd64-4        	17699610	        66.9 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sum64:darwin-4        	 9106179	       129 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sum64:amd64-4         	 9121912	       129 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sum64a:darwin-4       	 9186740	       129 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sum64a:amd64-4        	 9201374	       129 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sum128:darwin-4       	 4655198	       256 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sum128:amd64-4        	 4619257	       256 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sum128a:darwin-4      	 4696797	       256 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkShardNumberCalculation/fast,sum128a:amd64-4       	 4683013	       257 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/naive,md5:darwin-12         	 3000000	       575 ns/op	     216 B/op	       8 allocs/op
+// BenchmarkShardNumberCalculation/naive,md5:amd64-12          	 3000000	       560 ns/op	     216 B/op	       8 allocs/op
+// BenchmarkShardNumberCalculation/naive,sha1:darwin-12        	 2000000	       644 ns/op	     264 B/op	       8 allocs/op
+// BenchmarkShardNumberCalculation/naive,sha1:amd64-12         	 2000000	       647 ns/op	     264 B/op	       8 allocs/op
+// BenchmarkShardNumberCalculation/naive,sha256:darwin-12      	 2000000	       868 ns/op	     296 B/op	       8 allocs/op
+// BenchmarkShardNumberCalculation/naive,sha256:amd64-12       	 2000000	       849 ns/op	     296 B/op	       8 allocs/op
+// BenchmarkShardNumberCalculation/naive,sha512:darwin-12      	 1000000	      1512 ns/op	     552 B/op	       9 allocs/op
+// BenchmarkShardNumberCalculation/naive,sha512:amd64-12       	 1000000	      1473 ns/op	     552 B/op	       9 allocs/op
+// BenchmarkShardNumberCalculation/naive,sum32:darwin-12       	 5000000	       264 ns/op	      72 B/op	       6 allocs/op
+// BenchmarkShardNumberCalculation/naive,sum32:amd64-12        	 5000000	       265 ns/op	      72 B/op	       6 allocs/op
+// BenchmarkShardNumberCalculation/naive,sum32a:darwin-12      	 5000000	       263 ns/op	      72 B/op	       6 allocs/op
+// BenchmarkShardNumberCalculation/naive,sum32a:amd64-12       	 5000000	       269 ns/op	      72 B/op	       6 allocs/op
+// BenchmarkShardNumberCalculation/naive,sum64:darwin-12       	 5000000	       369 ns/op	     136 B/op	       7 allocs/op
+// BenchmarkShardNumberCalculation/naive,sum64:amd64-12        	 5000000	       370 ns/op	     136 B/op	       7 allocs/op
+// BenchmarkShardNumberCalculation/naive,sum64a:darwin-12      	 3000000	       368 ns/op	     136 B/op	       7 allocs/op
+// BenchmarkShardNumberCalculation/naive,sum64a:amd64-12       	 5000000	       373 ns/op	     136 B/op	       7 allocs/op
+// BenchmarkShardNumberCalculation/naive,sum128:darwin-12      	 3000000	       560 ns/op	     216 B/op	       8 allocs/op
+// BenchmarkShardNumberCalculation/naive,sum128:amd64-12       	 3000000	       564 ns/op	     216 B/op	       8 allocs/op
+// BenchmarkShardNumberCalculation/naive,sum128a:darwin-12     	 3000000	       557 ns/op	     216 B/op	       8 allocs/op
+// BenchmarkShardNumberCalculation/naive,sum128a:amd64-12      	 3000000	       586 ns/op	     216 B/op	       8 allocs/op
+// BenchmarkShardNumberCalculation/simple,md5:darwin-12        	10000000	       174 ns/op	     112 B/op	       4 allocs/op
+// BenchmarkShardNumberCalculation/simple,md5:amd64-12         	10000000	       166 ns/op	     112 B/op	       4 allocs/op
+// BenchmarkShardNumberCalculation/simple,sha1:darwin-12       	10000000	       196 ns/op	     144 B/op	       4 allocs/op
+// BenchmarkShardNumberCalculation/simple,sha1:amd64-12        	10000000	       203 ns/op	     144 B/op	       4 allocs/op
+// BenchmarkShardNumberCalculation/simple,sha256:darwin-12     	10000000	       222 ns/op	     144 B/op	       4 allocs/op
+// BenchmarkShardNumberCalculation/simple,sha256:amd64-12      	10000000	       233 ns/op	     144 B/op	       4 allocs/op
+// BenchmarkShardNumberCalculation/simple,sha512:darwin-12     	 5000000	       346 ns/op	     208 B/op	       4 allocs/op
+// BenchmarkShardNumberCalculation/simple,sha512:amd64-12      	 5000000	       354 ns/op	     208 B/op	       4 allocs/op
+// BenchmarkShardNumberCalculation/simple,sum32:darwin-12      	20000000	        97.8 ns/op	      24 B/op	       3 allocs/op
+// BenchmarkShardNumberCalculation/simple,sum32:amd64-12       	20000000	        95.9 ns/op	      24 B/op	       3 allocs/op
+// BenchmarkShardNumberCalculation/simple,sum32a:darwin-12     	20000000	        93.0 ns/op	      24 B/op	       3 allocs/op
+// BenchmarkShardNumberCalculation/simple,sum32a:amd64-12      	20000000	        95.1 ns/op	      24 B/op	       3 allocs/op
+// BenchmarkShardNumberCalculation/simple,sum64:darwin-12      	20000000	        87.2 ns/op	      24 B/op	       3 allocs/op
+// BenchmarkShardNumberCalculation/simple,sum64:amd64-12       	20000000	        86.5 ns/op	      24 B/op	       3 allocs/op
+// BenchmarkShardNumberCalculation/simple,sum64a:darwin-12     	20000000	        86.3 ns/op	      24 B/op	       3 allocs/op
+// BenchmarkShardNumberCalculation/simple,sum64a:amd64-12      	20000000	        86.2 ns/op	      24 B/op	       3 allocs/op
+// BenchmarkShardNumberCalculation/simple,sum128:darwin-12     	10000000	       157 ns/op	     112 B/op	       4 allocs/op
+// BenchmarkShardNumberCalculation/simple,sum128:amd64-12      	10000000	       158 ns/op	     112 B/op	       4 allocs/op
+// BenchmarkShardNumberCalculation/simple,sum128a:darwin-12    	10000000	       157 ns/op	     112 B/op	       4 allocs/op
+// BenchmarkShardNumberCalculation/simple,sum128a:amd64-12     	10000000	       157 ns/op	     112 B/op	       4 allocs/op
+// BenchmarkShardNumberCalculation/fast,md5:darwin-12          	10000000	       177 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,md5:amd64-12           	10000000	       175 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sha1:darwin-12         	10000000	       217 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sha1:amd64-12          	10000000	       221 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sha256:darwin-12       	 5000000	       348 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sha256:amd64-12        	 5000000	       346 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sha512:darwin-12       	 2000000	       701 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sha512:amd64-12        	 2000000	       701 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sum32:darwin-12        	30000000	        45.4 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sum32:amd64-12         	30000000	        45.7 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sum32a:darwin-12       	30000000	        44.8 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sum32a:amd64-12        	30000000	        45.1 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sum64:darwin-12        	20000000	        89.4 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sum64:amd64-12         	20000000	        91.2 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sum64a:darwin-12       	20000000	        88.6 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sum64a:amd64-12        	20000000	        88.8 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sum128:darwin-12       	10000000	       174 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sum128:amd64-12        	10000000	       174 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sum128a:darwin-12      	10000000	       175 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkShardNumberCalculation/fast,sum128a:amd64-12       	10000000	       174 ns/op	       0 B/op	       0 allocs/op
 func BenchmarkShardNumberCalculation(b *testing.B) {
 	hashes := []struct {
 		name     string
@@ -137,7 +137,7 @@ func BenchmarkShardNumberCalculation(b *testing.B) {
 		{"simple", ShardNumberSimple},
 		{"fast", ShardNumberFast},
 	}
-	size := uint64(math.MaxUint32)
+	size := uint64(math.MaxUint64)
 	for _, benchmark := range benchmarks {
 		for _, algorithm := range hashes {
 			for _, key := range keys {
