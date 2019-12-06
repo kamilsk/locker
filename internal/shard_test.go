@@ -121,8 +121,8 @@ func BenchmarkShardNumberCalculation(b *testing.B) {
 				checksum := algorithm.hash.Sum(nil)
 				algorithm.hash.Reset()
 
-				b.ResetTimer()
 				b.ReportAllocs()
+				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
 					_ = benchmark.implementation(checksum, size)
 				}

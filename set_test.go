@@ -3,55 +3,104 @@ package locker_test
 import (
 	"crypto/md5"
 	"crypto/sha1"
-	"crypto/sha256"
-	"crypto/sha512"
 	"hash"
 	"hash/fnv"
+	"math"
 	"runtime"
 	"testing"
+	"time"
 
 	. "github.com/kamilsk/locker"
 )
 
-var keys = [...]string{runtime.GOOS, runtime.GOARCH}
-
-func TestSet(t *testing.T) {
-	set := Set(3, md5.New())
-	set.ByKey("test").Lock()
-	set.ByKey("another").Lock()
-	defer set.ByKey("test").Unlock()
-	defer set.ByKey("another").Unlock()
-	go func() { set.ByKey("test").Unlock() }()
-	go func() { set.ByKey("another").Unlock() }()
-	set.ByKey("test").Lock()
-	set.ByKey("another").Lock()
+func TestMutexSet_ByKey(t *testing.T) {
+	keys := [...]string{runtime.GOOS, runtime.GOARCH}
+	set := Set(3)
+	for _, key := range keys {
+		set.ByKey(key).Lock()
+		go func(key string) {
+			time.Sleep(time.Millisecond)
+			set.ByKey(key).Unlock()
+		}(key)
+	}
+	for _, key := range keys {
+		set.ByKey(key).Lock()
+	}
 }
 
-// BenchmarkSet/md5-4         	 3252902	       378 ns/op	      56 B/op	       7 allocs/op
-// BenchmarkSet/sha1-4        	 2727148	       397 ns/op	      56 B/op	       7 allocs/op
-// BenchmarkSet/sha256-4      	 2518604	       448 ns/op	      56 B/op	       7 allocs/op
-// BenchmarkSet/sha512-4      	 2896508	       380 ns/op	      56 B/op	       7 allocs/op
-// BenchmarkSet/sum32-4       	 3305530	       351 ns/op	      56 B/op	       7 allocs/op
-func BenchmarkSet(b *testing.B) {
+// BenchmarkMutexSet_ByFingerprint/md5-4         	 1893616	       612 ns/op	      16 B/op	       1 allocs/op
+// BenchmarkMutexSet_ByFingerprint/sha1-4        	 2058212	       579 ns/op	      16 B/op	       1 allocs/op
+// BenchmarkMutexSet_ByFingerprint/sum32-4       	 1978899	       614 ns/op	      16 B/op	       1 allocs/op
+func BenchmarkMutexSet_ByFingerprint(b *testing.B) {
 	benchmarks := []struct {
 		name string
 		hash hash.Hash
 	}{
 		{name: "md5", hash: md5.New()},
 		{name: "sha1", hash: sha1.New()},
-		{name: "sha256", hash: sha256.New()},
-		{name: "sha512", hash: sha512.New()},
 		{name: "sum32", hash: fnv.New32()},
 	}
+	fingerprint := []byte(runtime.GOOS)
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
-			b.ReportAllocs()
+			set := Set(10, SetWithHash(bm.hash))
 
-			set := Set(10, bm.hash)
+			b.ReportAllocs()
+			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				for _, key := range keys {
-					_ = set.ByKey(key)
-				}
+				_ = set.ByFingerprint(fingerprint)
+			}
+		})
+	}
+}
+
+// BenchmarkMutexSet_ByKey/md5-4         	 1976034	       619 ns/op	      24 B/op	       2 allocs/op
+// BenchmarkMutexSet_ByKey/sha1-4        	 1939647	       628 ns/op	      24 B/op	       2 allocs/op
+// BenchmarkMutexSet_ByKey/sum32-4       	 1872367	       653 ns/op	      24 B/op	       2 allocs/op
+func BenchmarkMutexSet_ByKey(b *testing.B) {
+	benchmarks := []struct {
+		name string
+		hash hash.Hash
+	}{
+		{name: "md5", hash: md5.New()},
+		{name: "sha1", hash: sha1.New()},
+		{name: "sum32", hash: fnv.New32()},
+	}
+	key := runtime.GOOS
+	for _, bm := range benchmarks {
+		b.Run(bm.name, func(b *testing.B) {
+			set := Set(10, SetWithHash(bm.hash))
+
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_ = set.ByKey(key)
+			}
+		})
+	}
+}
+
+// BenchmarkMutexSet_ByVirtualShard/md5-4         	100000000	        10.6 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkMutexSet_ByVirtualShard/sha1-4        	100000000	        10.4 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkMutexSet_ByVirtualShard/sum32-4       	100000000	        10.6 ns/op	       0 B/op	       0 allocs/op
+func BenchmarkMutexSet_ByVirtualShard(b *testing.B) {
+	benchmarks := []struct {
+		name string
+		hash hash.Hash
+	}{
+		{name: "md5", hash: md5.New()},
+		{name: "sha1", hash: sha1.New()},
+		{name: "sum32", hash: fnv.New32()},
+	}
+	shard := uint64(math.MaxUint64)
+	for _, bm := range benchmarks {
+		b.Run(bm.name, func(b *testing.B) {
+			set := Set(10, SetWithHash(bm.hash))
+
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_ = set.ByVirtualShard(shard)
 			}
 		})
 	}
