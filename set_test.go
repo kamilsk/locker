@@ -3,47 +3,182 @@ package locker_test
 import (
 	"crypto/md5"
 	"crypto/sha1"
+	"flag"
 	"hash"
-	"hash/fnv"
 	"math"
 	"runtime"
 	"testing"
-	"time"
 
 	. "github.com/kamilsk/locker"
 )
 
-func TestMutexSet_ByKey(t *testing.T) {
-	keys := [...]string{runtime.GOOS, runtime.GOARCH}
+var stress = flag.Bool("stress-test", false, "run stress tests")
+
+func TestSet(t *testing.T) {
+	t.Run("invalid capacity", func(t *testing.T) {
+		var set *MutexSet
+		func() {
+			defer func() {
+				if r := recover(); r == nil {
+					t.Error("panic is expected")
+					t.FailNow()
+				}
+			}()
+			set = Set(0)
+		}()
+		if set != nil {
+			t.Error("unexpected result")
+			t.FailNow()
+		}
+	})
+	t.Run("with options", func(t *testing.T) {
+		set := Set(3, SetWithHash(sha1.New), SetWithMapping(func([]byte, uint64) uint64 { return 0 }))
+		if set.ByKey(runtime.GOOS) != set.ByKey(runtime.GOARCH) {
+			t.Error("unexpected result")
+			t.FailNow()
+		}
+	})
+}
+
+func TestMutexSet_ByFingerprint(t *testing.T) {
+	fingerprints := [...][]byte{[]byte(runtime.GOOS), []byte(runtime.GOARCH)}
 	set := Set(3)
-	for _, key := range keys {
-		set.ByKey(key).Lock()
-		go func(key string) {
-			time.Sleep(time.Millisecond)
-			set.ByKey(key).Unlock()
-		}(key)
+
+	for _, fingerprint := range fingerprints {
+		origin := set.ByFingerprint(fingerprint)
+		for range make([]struct{}, 1000) {
+			current := set.ByFingerprint(fingerprint)
+			if origin != current {
+				t.Error("non-deterministic result")
+				t.FailNow()
+			}
+		}
 	}
-	for _, key := range keys {
-		set.ByKey(key).Lock()
+
+	for i, fingerprint := range fingerprints {
+		current := set.ByFingerprint(fingerprint)
+		for _, fingerprint := range fingerprints[i+1:] {
+			next := set.ByFingerprint(fingerprint)
+			if current == next {
+				t.Error("has deadlock")
+				t.FailNow()
+			}
+		}
+	}
+
+	for _, fingerprint := range fingerprints {
+		set.ByFingerprint(fingerprint).Lock()
+		go func(fingerprint []byte) { set.ByFingerprint(fingerprint).Unlock() }(fingerprint)
+	}
+	for _, fingerprint := range fingerprints {
+		set.ByFingerprint(fingerprint).Lock()
+	}
+	for _, fingerprint := range fingerprints {
+		set.ByFingerprint(fingerprint).Unlock()
 	}
 }
 
-// BenchmarkMutexSet_ByFingerprint/md5-4         	 1893616	       612 ns/op	      16 B/op	       1 allocs/op
-// BenchmarkMutexSet_ByFingerprint/sha1-4        	 2058212	       579 ns/op	      16 B/op	       1 allocs/op
-// BenchmarkMutexSet_ByFingerprint/sum32-4       	 1978899	       614 ns/op	      16 B/op	       1 allocs/op
+func TestMutexSet_ByKey(t *testing.T) {
+	keys := [...]string{runtime.GOOS, runtime.GOARCH}
+	set := Set(3)
+
+	for _, key := range keys {
+		origin := set.ByKey(key)
+		for range make([]struct{}, 1000) {
+			current := set.ByKey(key)
+			if origin != current {
+				t.Error("non-deterministic result")
+				t.FailNow()
+			}
+		}
+	}
+
+	for i, key := range keys {
+		current := set.ByKey(key)
+		for _, key := range keys[i+1:] {
+			next := set.ByKey(key)
+			if current == next {
+				t.Error("has deadlock")
+				t.FailNow()
+			}
+		}
+	}
+
+	for _, key := range keys {
+		set.ByKey(key).Lock()
+		go func(key string) { set.ByKey(key).Unlock() }(key)
+	}
+	for _, key := range keys {
+		set.ByKey(key).Lock()
+	}
+	for _, key := range keys {
+		set.ByKey(key).Unlock()
+	}
+}
+
+func TestMutexSet_ByVirtualShard(t *testing.T) {
+	shards := [...]uint64{1, 5, 9}
+	set := Set(3)
+
+	for _, shard := range shards {
+		origin := set.ByVirtualShard(shard)
+		for range make([]struct{}, 1000) {
+			current := set.ByVirtualShard(shard)
+			if origin != current {
+				t.Error("non-deterministic result")
+				t.FailNow()
+			}
+		}
+	}
+
+	for i, shard := range shards {
+		current := set.ByVirtualShard(shard)
+		for _, shard := range shards[i+1:] {
+			next := set.ByVirtualShard(shard)
+			if current == next {
+				t.Error("has deadlock")
+				t.FailNow()
+			}
+		}
+	}
+
+	for _, shard := range shards {
+		set.ByVirtualShard(shard).Lock()
+		go func(shard uint64) { set.ByVirtualShard(shard).Unlock() }(shard)
+	}
+	for _, shard := range shards {
+		set.ByVirtualShard(shard).Lock()
+	}
+	for _, shard := range shards {
+		set.ByVirtualShard(shard).Unlock()
+	}
+}
+
+func TestMutexSet_StressTest(t *testing.T) {
+	if !*stress {
+		t.SkipNow()
+	}
+	for range make([]struct{}, 1000) {
+		TestMutexSet_ByFingerprint(t)
+		TestMutexSet_ByKey(t)
+		TestMutexSet_ByVirtualShard(t)
+	}
+}
+
+// BenchmarkMutexSet_ByFingerprint/md5-4         	 2167080	       572 ns/op	     112 B/op	       2 allocs/op
+// BenchmarkMutexSet_ByFingerprint/sha1-4        	 2174104	       558 ns/op	     112 B/op	       2 allocs/op
 func BenchmarkMutexSet_ByFingerprint(b *testing.B) {
 	benchmarks := []struct {
 		name string
-		hash hash.Hash
+		hash func() hash.Hash
 	}{
-		{name: "md5", hash: md5.New()},
-		{name: "sha1", hash: sha1.New()},
-		{name: "sum32", hash: fnv.New32()},
+		{name: "md5", hash: md5.New},
+		{name: "sha1", hash: sha1.New},
 	}
 	fingerprint := []byte(runtime.GOOS)
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
-			set := Set(10, SetWithHash(bm.hash))
+			set := Set(3, SetWithHash(bm.hash))
 
 			b.ReportAllocs()
 			b.ResetTimer()
@@ -54,22 +189,20 @@ func BenchmarkMutexSet_ByFingerprint(b *testing.B) {
 	}
 }
 
-// BenchmarkMutexSet_ByKey/md5-4         	 1976034	       619 ns/op	      24 B/op	       2 allocs/op
-// BenchmarkMutexSet_ByKey/sha1-4        	 1939647	       628 ns/op	      24 B/op	       2 allocs/op
-// BenchmarkMutexSet_ByKey/sum32-4       	 1872367	       653 ns/op	      24 B/op	       2 allocs/op
+// BenchmarkMutexSet_ByKey/md5-4         	 1968254	       596 ns/op	     120 B/op	       3 allocs/op
+// BenchmarkMutexSet_ByKey/sha1-4        	 2027947	       593 ns/op	     120 B/op	       3 allocs/op
 func BenchmarkMutexSet_ByKey(b *testing.B) {
 	benchmarks := []struct {
 		name string
-		hash hash.Hash
+		hash func() hash.Hash
 	}{
-		{name: "md5", hash: md5.New()},
-		{name: "sha1", hash: sha1.New()},
-		{name: "sum32", hash: fnv.New32()},
+		{name: "md5", hash: md5.New},
+		{name: "sha1", hash: sha1.New},
 	}
 	key := runtime.GOOS
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
-			set := Set(10, SetWithHash(bm.hash))
+			set := Set(3, SetWithHash(bm.hash))
 
 			b.ReportAllocs()
 			b.ResetTimer()
@@ -80,22 +213,20 @@ func BenchmarkMutexSet_ByKey(b *testing.B) {
 	}
 }
 
-// BenchmarkMutexSet_ByVirtualShard/md5-4         	100000000	        10.6 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkMutexSet_ByVirtualShard/sha1-4        	100000000	        10.4 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkMutexSet_ByVirtualShard/sum32-4       	100000000	        10.6 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkMutexSet_ByVirtualShard/md5-4         	100000000	        10.4 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkMutexSet_ByVirtualShard/sha1-4        	100000000	        10.1 ns/op	       0 B/op	       0 allocs/op
 func BenchmarkMutexSet_ByVirtualShard(b *testing.B) {
 	benchmarks := []struct {
 		name string
-		hash hash.Hash
+		hash func() hash.Hash
 	}{
-		{name: "md5", hash: md5.New()},
-		{name: "sha1", hash: sha1.New()},
-		{name: "sum32", hash: fnv.New32()},
+		{name: "md5", hash: md5.New},
+		{name: "sha1", hash: sha1.New},
 	}
 	shard := uint64(math.MaxUint64)
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
-			set := Set(10, SetWithHash(bm.hash))
+			set := Set(3, SetWithHash(bm.hash))
 
 			b.ReportAllocs()
 			b.ResetTimer()
@@ -103,5 +234,156 @@ func BenchmarkMutexSet_ByVirtualShard(b *testing.B) {
 				_ = set.ByVirtualShard(shard)
 			}
 		})
+	}
+}
+
+func TestRWSet(t *testing.T) {
+	t.Run("invalid capacity", func(t *testing.T) {
+		var set *RWMutexSet
+		func() {
+			defer func() {
+				if r := recover(); r == nil {
+					t.Error("panic is expected")
+					t.FailNow()
+				}
+			}()
+			set = RWSet(0)
+		}()
+		if set != nil {
+			t.Error("unexpected result")
+			t.FailNow()
+		}
+	})
+	t.Run("with options", func(t *testing.T) {
+		set := RWSet(3, RWSetWithHash(sha1.New), RWSetWithMapping(func([]byte, uint64) uint64 { return 0 }))
+		if set.ByKey(runtime.GOOS) != set.ByKey(runtime.GOARCH) {
+			t.Error("unexpected result")
+			t.FailNow()
+		}
+	})
+}
+
+func TestRWMutexSet_ByFingerprint(t *testing.T) {
+	fingerprints := [...][]byte{[]byte(runtime.GOOS), []byte(runtime.GOARCH)}
+	set := RWSet(3)
+
+	for _, fingerprint := range fingerprints {
+		origin := set.ByFingerprint(fingerprint)
+		for range make([]struct{}, 1000) {
+			current := set.ByFingerprint(fingerprint)
+			if origin != current {
+				t.Error("non-deterministic result")
+				t.FailNow()
+			}
+		}
+	}
+
+	for i, fingerprint := range fingerprints {
+		current := set.ByFingerprint(fingerprint)
+		for _, fingerprint := range fingerprints[i+1:] {
+			next := set.ByFingerprint(fingerprint)
+			if current == next {
+				t.Error("has deadlock")
+				t.FailNow()
+			}
+		}
+	}
+
+	for _, fingerprint := range fingerprints {
+		set.ByFingerprint(fingerprint).Lock()
+		go func(fingerprint []byte) { set.ByFingerprint(fingerprint).Unlock() }(fingerprint)
+	}
+	for _, fingerprint := range fingerprints {
+		set.ByFingerprint(fingerprint).Lock()
+	}
+	for _, fingerprint := range fingerprints {
+		set.ByFingerprint(fingerprint).Unlock()
+	}
+}
+
+func TestRWMutexSet_ByKey(t *testing.T) {
+	keys := [...]string{runtime.GOOS, runtime.GOARCH}
+	set := RWSet(3)
+
+	for _, key := range keys {
+		origin := set.ByKey(key)
+		for range make([]struct{}, 1000) {
+			current := set.ByKey(key)
+			if origin != current {
+				t.Error("non-deterministic result")
+				t.FailNow()
+			}
+		}
+	}
+
+	for i, key := range keys {
+		current := set.ByKey(key)
+		for _, key := range keys[i+1:] {
+			next := set.ByKey(key)
+			if current == next {
+				t.Error("has deadlock")
+				t.FailNow()
+			}
+		}
+	}
+
+	for _, key := range keys {
+		set.ByKey(key).Lock()
+		go func(key string) { set.ByKey(key).Unlock() }(key)
+	}
+	for _, key := range keys {
+		set.ByKey(key).Lock()
+	}
+	for _, key := range keys {
+		set.ByKey(key).Unlock()
+	}
+}
+
+func TestRWMutexSet_ByVirtualShard(t *testing.T) {
+	shards := [...]uint64{1, 5, 9}
+	set := RWSet(3)
+
+	for _, shard := range shards {
+		origin := set.ByVirtualShard(shard)
+		for range make([]struct{}, 1000) {
+			current := set.ByVirtualShard(shard)
+			if origin != current {
+				t.Error("non-deterministic result")
+				t.FailNow()
+			}
+		}
+	}
+
+	for i, shard := range shards {
+		current := set.ByVirtualShard(shard)
+		for _, shard := range shards[i+1:] {
+			next := set.ByVirtualShard(shard)
+			if current == next {
+				t.Error("has deadlock")
+				t.FailNow()
+			}
+		}
+	}
+
+	for _, shard := range shards {
+		set.ByVirtualShard(shard).Lock()
+		go func(shard uint64) { set.ByVirtualShard(shard).Unlock() }(shard)
+	}
+	for _, shard := range shards {
+		set.ByVirtualShard(shard).Lock()
+	}
+	for _, shard := range shards {
+		set.ByVirtualShard(shard).Unlock()
+	}
+}
+
+func TestRWMutexSet_StressTest(t *testing.T) {
+	if !*stress {
+		t.SkipNow()
+	}
+	for range make([]struct{}, 1000) {
+		TestRWMutexSet_ByFingerprint(t)
+		TestRWMutexSet_ByKey(t)
+		TestRWMutexSet_ByVirtualShard(t)
 	}
 }
