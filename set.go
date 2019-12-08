@@ -28,11 +28,11 @@ func Set(capacity int, options ...SetOption) *MutexSet {
 type SetOption func(*MutexSet)
 
 func SetWithHash(builder func() hash.Hash) SetOption {
-	return func(set *MutexSet) { set.hash = builder }
+	return func(c *MutexSet) { c.hash = builder }
 }
 
 func SetWithMapping(index func([]byte, uint64) uint64) SetOption {
-	return func(set *MutexSet) { set.idx = index }
+	return func(c *MutexSet) { c.idx = index }
 }
 
 type MutexSet struct {
@@ -42,20 +42,20 @@ type MutexSet struct {
 	size uint64
 }
 
-func (mx MutexSet) ByFingerprint(fingerprint []byte) *sync.Mutex {
-	h := mx.hash()
+func (c MutexSet) ByFingerprint(fingerprint []byte) *sync.Mutex {
+	h := c.hash()
 	_, _ = h.Write(fingerprint)
-	shard := mx.idx(h.Sum(nil), mx.size)
+	shard := c.idx(h.Sum(nil), c.size)
 	h.Reset()
-	return &mx.set[shard]
+	return &c.set[shard]
 }
 
-func (mx MutexSet) ByKey(key string) *sync.Mutex {
-	return mx.ByFingerprint([]byte(key))
+func (c MutexSet) ByKey(key string) *sync.Mutex {
+	return c.ByFingerprint([]byte(key))
 }
 
-func (mx MutexSet) ByVirtualShard(shard uint64) *sync.Mutex {
-	return &mx.set[shard%mx.size]
+func (c MutexSet) ByVirtualShard(shard uint64) *sync.Mutex {
+	return &c.set[shard%c.size]
 }
 
 func RWSet(capacity int, options ...RWSetOption) *RWMutexSet {
@@ -78,11 +78,11 @@ func RWSet(capacity int, options ...RWSetOption) *RWMutexSet {
 type RWSetOption func(*RWMutexSet)
 
 func RWSetWithHash(builder func() hash.Hash) RWSetOption {
-	return func(set *RWMutexSet) { set.hash = builder }
+	return func(c *RWMutexSet) { c.hash = builder }
 }
 
 func RWSetWithMapping(index func([]byte, uint64) uint64) RWSetOption {
-	return func(set *RWMutexSet) { set.idx = index }
+	return func(c *RWMutexSet) { c.idx = index }
 }
 
 type RWMutexSet struct {
@@ -92,18 +92,18 @@ type RWMutexSet struct {
 	size uint64
 }
 
-func (mx RWMutexSet) ByFingerprint(fingerprint []byte) *sync.RWMutex {
-	h := mx.hash()
+func (c RWMutexSet) ByFingerprint(fingerprint []byte) *sync.RWMutex {
+	h := c.hash()
 	_, _ = h.Write(fingerprint)
-	shard := mx.idx(h.Sum(nil), mx.size)
+	shard := c.idx(h.Sum(nil), c.size)
 	h.Reset()
-	return &mx.set[shard]
+	return &c.set[shard]
 }
 
-func (mx RWMutexSet) ByKey(key string) *sync.RWMutex {
-	return mx.ByFingerprint([]byte(key))
+func (c RWMutexSet) ByKey(key string) *sync.RWMutex {
+	return c.ByFingerprint([]byte(key))
 }
 
-func (mx RWMutexSet) ByVirtualShard(shard uint64) *sync.RWMutex {
-	return &mx.set[shard%mx.size]
+func (c RWMutexSet) ByVirtualShard(shard uint64) *sync.RWMutex {
+	return &c.set[shard%c.size]
 }
