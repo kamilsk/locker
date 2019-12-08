@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.4.3
+    env_file:
+      - .env
+    ports:
+      - 2379:2379
+      - 2380:2380
+    volumes:
+      - etcd:/data
+
+  redis:
+    image: redis:5.0.7-alpine
+    env_file:
+      - .env
+    ports:
+      - 6379:6379
+    volumes:
+      - redis:/data
+
+volumes:
+
+  etcd: { driver: local }
+
+  redis: { driver: local }
