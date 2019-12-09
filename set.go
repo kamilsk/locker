@@ -8,10 +8,7 @@ import (
 	"github.com/kamilsk/locker/internal"
 )
 
-func Set(capacity int, options ...SetOption) *MutexSet {
-	if capacity < 1 {
-		panic("capacity must be greater than zero")
-	}
+func Set(capacity uint, options ...SetOption) *MutexSet {
 	set := &MutexSet{set: make([]sync.Mutex, capacity), size: uint64(capacity)}
 	for _, option := range options {
 		option(set)
@@ -58,10 +55,7 @@ func (c MutexSet) ByVirtualShard(shard uint64) *sync.Mutex {
 	return &c.set[shard%c.size]
 }
 
-func RWSet(capacity int, options ...RWSetOption) *RWMutexSet {
-	if capacity < 1 {
-		panic("capacity must be greater than zero")
-	}
+func RWSet(capacity uint, options ...RWSetOption) *RWMutexSet {
 	set := &RWMutexSet{set: make([]sync.RWMutex, capacity), size: uint64(capacity)}
 	for _, option := range options {
 		option(set)

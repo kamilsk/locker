@@ -5,10 +5,7 @@ import (
 	"hash"
 )
 
-func NewContainer(capacity int, options ...ContainerOption) *Container {
-	if capacity < 1 {
-		panic("capacity must be greater than zero")
-	}
+func NewContainer(capacity uint, options ...ContainerOption) *Container {
 	set := &Container{set: make([]T, capacity), size: uint64(capacity)}
 	for _, option := range options {
 		option(set)

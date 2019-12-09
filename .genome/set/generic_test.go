@@ -15,27 +15,15 @@ import (
 var stress = flag.Bool("stress-test", false, "run stress tests")
 
 func TestNewContainer(t *testing.T) {
-	t.Run("invalid capacity", func(t *testing.T) {
-		var container *Container
-		func() {
-			defer func() {
-				if r := recover(); r == nil {
-					t.Error("panic is expected")
-					t.FailNow()
-				}
-			}()
-			container = NewContainer(0)
-		}()
-		if container != nil {
+	t.Run("with custom hash option", func(t *testing.T) {
+		container := NewContainer(3, ContainerWithHash(sha1.New))
+		if container.ByKey(runtime.GOOS) == container.ByKey(runtime.GOARCH) {
 			t.Error("unexpected result")
 			t.FailNow()
 		}
 	})
-	t.Run("with options", func(t *testing.T) {
-		container := NewContainer(3,
-			ContainerWithHash(sha1.New),
-			ContainerWithMapping(func([]byte, uint64) uint64 { return 0 }),
-		)
+	t.Run("with custom mapping option", func(t *testing.T) {
+		container := NewContainer(3, ContainerWithMapping(func([]byte, uint64) uint64 { return 0 }))
 		if container.ByKey(runtime.GOOS) != container.ByKey(runtime.GOARCH) {
 			t.Error("unexpected result")
 			t.FailNow()

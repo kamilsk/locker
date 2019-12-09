@@ -15,25 +15,16 @@ import (
 var stress = flag.Bool("stress-test", false, "run stress tests")
 
 func TestSet(t *testing.T) {
-	t.Run("invalid capacity", func(t *testing.T) {
-		var set *MutexSet
-		func() {
-			defer func() {
-				if r := recover(); r == nil {
-					t.Error("panic is expected")
-					t.FailNow()
-				}
-			}()
-			set = Set(0)
-		}()
-		if set != nil {
+	t.Run("with custom hash option", func(t *testing.T) {
+		container := Set(3, SetWithHash(sha1.New))
+		if container.ByKey(runtime.GOOS) == container.ByKey(runtime.GOARCH) {
 			t.Error("unexpected result")
 			t.FailNow()
 		}
 	})
-	t.Run("with options", func(t *testing.T) {
-		set := Set(3, SetWithHash(sha1.New), SetWithMapping(func([]byte, uint64) uint64 { return 0 }))
-		if set.ByKey(runtime.GOOS) != set.ByKey(runtime.GOARCH) {
+	t.Run("with custom mapping option", func(t *testing.T) {
+		container := Set(3, SetWithMapping(func([]byte, uint64) uint64 { return 0 }))
+		if container.ByKey(runtime.GOOS) != container.ByKey(runtime.GOARCH) {
 			t.Error("unexpected result")
 			t.FailNow()
 		}
@@ -205,25 +196,16 @@ func BenchmarkMutexSet_ByVirtualShard(b *testing.B) {
 }
 
 func TestRWSet(t *testing.T) {
-	t.Run("invalid capacity", func(t *testing.T) {
-		var set *RWMutexSet
-		func() {
-			defer func() {
-				if r := recover(); r == nil {
-					t.Error("panic is expected")
-					t.FailNow()
-				}
-			}()
-			set = RWSet(0)
-		}()
-		if set != nil {
+	t.Run("with custom hash option", func(t *testing.T) {
+		container := RWSet(3, RWSetWithHash(sha1.New))
+		if container.ByKey(runtime.GOOS) == container.ByKey(runtime.GOARCH) {
 			t.Error("unexpected result")
 			t.FailNow()
 		}
 	})
-	t.Run("with options", func(t *testing.T) {
-		set := RWSet(3, RWSetWithHash(sha1.New), RWSetWithMapping(func([]byte, uint64) uint64 { return 0 }))
-		if set.ByKey(runtime.GOOS) != set.ByKey(runtime.GOARCH) {
+	t.Run("with custom mapping option", func(t *testing.T) {
+		container := RWSet(3, RWSetWithMapping(func([]byte, uint64) uint64 { return 0 }))
+		if container.ByKey(runtime.GOOS) != container.ByKey(runtime.GOARCH) {
 			t.Error("unexpected result")
 			t.FailNow()
 		}
