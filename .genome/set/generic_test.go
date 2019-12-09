@@ -68,8 +68,6 @@ func TestContainer_ByFingerprint(t *testing.T) {
 			}
 		}
 	}
-
-	// TODO:debt test core functionality
 }
 
 func TestContainer_ByKey(t *testing.T) {
@@ -97,8 +95,6 @@ func TestContainer_ByKey(t *testing.T) {
 			}
 		}
 	}
-
-	// TODO:debt test core functionality
 }
 
 func TestContainer_ByVirtualShard(t *testing.T) {
@@ -126,8 +122,6 @@ func TestContainer_ByVirtualShard(t *testing.T) {
 			}
 		}
 	}
-
-	// TODO:debt test core functionality
 }
 
 func TestContainer_StressTest(t *testing.T) {

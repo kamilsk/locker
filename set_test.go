@@ -65,17 +65,6 @@ func TestMutexSet_ByFingerprint(t *testing.T) {
 			}
 		}
 	}
-
-	for _, fingerprint := range fingerprints {
-		set.ByFingerprint(fingerprint).Lock()
-		go func(fingerprint []byte) { set.ByFingerprint(fingerprint).Unlock() }(fingerprint)
-	}
-	for _, fingerprint := range fingerprints {
-		set.ByFingerprint(fingerprint).Lock()
-	}
-	for _, fingerprint := range fingerprints {
-		set.ByFingerprint(fingerprint).Unlock()
-	}
 }
 
 func TestMutexSet_ByKey(t *testing.T) {
@@ -103,17 +92,6 @@ func TestMutexSet_ByKey(t *testing.T) {
 			}
 		}
 	}
-
-	for _, key := range keys {
-		set.ByKey(key).Lock()
-		go func(key string) { set.ByKey(key).Unlock() }(key)
-	}
-	for _, key := range keys {
-		set.ByKey(key).Lock()
-	}
-	for _, key := range keys {
-		set.ByKey(key).Unlock()
-	}
 }
 
 func TestMutexSet_ByVirtualShard(t *testing.T) {
@@ -140,17 +118,6 @@ func TestMutexSet_ByVirtualShard(t *testing.T) {
 				t.FailNow()
 			}
 		}
-	}
-
-	for _, shard := range shards {
-		set.ByVirtualShard(shard).Lock()
-		go func(shard uint64) { set.ByVirtualShard(shard).Unlock() }(shard)
-	}
-	for _, shard := range shards {
-		set.ByVirtualShard(shard).Lock()
-	}
-	for _, shard := range shards {
-		set.ByVirtualShard(shard).Unlock()
 	}
 }
 
@@ -288,17 +255,6 @@ func TestRWMutexSet_ByFingerprint(t *testing.T) {
 			}
 		}
 	}
-
-	for _, fingerprint := range fingerprints {
-		set.ByFingerprint(fingerprint).Lock()
-		go func(fingerprint []byte) { set.ByFingerprint(fingerprint).Unlock() }(fingerprint)
-	}
-	for _, fingerprint := range fingerprints {
-		set.ByFingerprint(fingerprint).Lock()
-	}
-	for _, fingerprint := range fingerprints {
-		set.ByFingerprint(fingerprint).Unlock()
-	}
 }
 
 func TestRWMutexSet_ByKey(t *testing.T) {
@@ -326,17 +282,6 @@ func TestRWMutexSet_ByKey(t *testing.T) {
 			}
 		}
 	}
-
-	for _, key := range keys {
-		set.ByKey(key).Lock()
-		go func(key string) { set.ByKey(key).Unlock() }(key)
-	}
-	for _, key := range keys {
-		set.ByKey(key).Lock()
-	}
-	for _, key := range keys {
-		set.ByKey(key).Unlock()
-	}
 }
 
 func TestRWMutexSet_ByVirtualShard(t *testing.T) {
@@ -363,17 +308,6 @@ func TestRWMutexSet_ByVirtualShard(t *testing.T) {
 				t.FailNow()
 			}
 		}
-	}
-
-	for _, shard := range shards {
-		set.ByVirtualShard(shard).Lock()
-		go func(shard uint64) { set.ByVirtualShard(shard).Unlock() }(shard)
-	}
-	for _, shard := range shards {
-		set.ByVirtualShard(shard).Lock()
-	}
-	for _, shard := range shards {
-		set.ByVirtualShard(shard).Unlock()
 	}
 }
 
