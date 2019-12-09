@@ -1,7 +1,5 @@
 package locker
 
-import "context"
-
 // A Breaker carries a cancellation signal to break an action execution.
 //
 // It is a subset of `context.Context` and `github.com/kamilsk/breaker.Breaker`.
@@ -20,14 +18,14 @@ type BreakCloser interface {
 	Close()
 }
 
-// A DistributedLock carries of getting an exclusive lock to access
-// a critical section in a distributed system.
-type DistributedLock interface {
-	// Lock locks a distributed mutex. If the lock is already in use,
-	// the calling goroutine blocks until the mutex is available, timeout exited
-	// or a network error occurred.
-	Lock(context.Context) error
-	// Unlock unlocks a distributed mutex. It returns an error if the mutex is not locked
-	// on entry to Unlock, timeout exited or a network error occurred.
-	Unlock(context.Context) error
+// A SafeLock carries of getting an exclusive lock to access
+// a critical section with a timeout specified by context.
+type SafeLock interface {
+	// Lock locks a mutex. If the lock is already in use,
+	// the calling goroutine blocks until the mutex is available
+	// or an error occurred.
+	Lock(Breaker) error
+	// Unlock unlocks a mutex. It returns an error if the mutex is not locked
+	// on entry to Unlock or a timeout occurred.
+	Unlock(Breaker) error
 }
