@@ -1,8 +1,6 @@
 package locker
 
 // A Breaker carries a cancellation signal to break an action execution.
-//
-// It is a subset of `context.Context` and `github.com/kamilsk/breaker.Breaker`.
 type Breaker interface {
 	// Done returns a channel that's closed when a cancellation signal occurred.
 	Done() <-chan struct{}
@@ -10,8 +8,6 @@ type Breaker interface {
 
 // A BreakCloser carries a cancellation signal to break an action execution
 // and can release resources associated with it.
-//
-// It is a subset of `github.com/kamilsk/breaker.Breaker`.
 type BreakCloser interface {
 	Breaker
 	// Close closes the Done channel and releases resources associated with it.
@@ -19,13 +15,28 @@ type BreakCloser interface {
 }
 
 // A SafeLock carries of getting an exclusive lock to access
-// a critical section with a timeout specified by context.
+// a critical section with the ability to interrupt the action.
 type SafeLock interface {
 	// Lock locks a mutex. If the lock is already in use,
 	// the calling goroutine blocks until the mutex is available
 	// or an error occurred.
 	Lock(Breaker) error
-	// Unlock unlocks a mutex. It returns an error if the mutex is not locked
-	// on entry to Unlock or a timeout occurred.
+	// Unlock unlocks a mutex. It could return an error if the mutex
+	// is not locked on entry to Unlock.
 	Unlock(Breaker) error
+}
+
+type Semaphore interface {
+	Acquire(Breaker, uint32) error
+	TryAcquire(uint32) bool
+	Release(uint32) uint32
+}
+
+type Observable interface {
+	Count() uint32
+	Limit() uint32
+}
+
+type Resizable interface {
+	SetLimit(uint32) uint32
 }

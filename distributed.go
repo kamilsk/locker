@@ -1,15 +1,15 @@
 package locker
 
-func Distributed() *distributed {
-	return &distributed{}
+func Distributed() *dlock {
+	return &dlock{}
 }
 
-type distributed struct{}
+type dlock struct{}
 
-func (d *distributed) Lock(Breaker) error {
+func (l *dlock) Lock(Breaker) error {
 	return nil
 }
 
-func (d *distributed) Unlock(Breaker) error {
+func (l *dlock) Unlock(Breaker) error {
 	return nil
 }
