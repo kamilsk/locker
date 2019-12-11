@@ -8,10 +8,10 @@ func Distributed() *dlock {
 
 type dlock struct{}
 
-func (l *dlock) Lock(internal.Breaker) error {
+func (lock *dlock) Lock(internal.Breaker) error {
 	return nil
 }
 
-func (l *dlock) Unlock(internal.Breaker) error {
+func (lock *dlock) Unlock(internal.Breaker) error {
 	return nil
 }
