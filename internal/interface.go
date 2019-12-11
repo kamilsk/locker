@@ -1,4 +1,4 @@
-package locker
+package internal
 
 // A Breaker carries a cancellation signal to break an action execution.
 type Breaker interface {

@@ -3,6 +3,8 @@ package locker
 import (
 	"sync"
 	"sync/atomic"
+
+	"github.com/kamilsk/locker/internal"
 )
 
 func Limited(capacity uint) *llock {
@@ -18,16 +20,16 @@ type llock struct {
 	signal chan struct{}
 }
 
-func (l *llock) Lock(breaker Breaker) error {
+func (l *llock) Lock(breaker internal.Breaker) error {
 	return l.Acquire(breaker, l.Limit())
 }
 
-func (l *llock) Unlock(Breaker) error {
+func (l *llock) Unlock(internal.Breaker) error {
 	_ = l.Release(l.Limit())
 	return nil
 }
 
-func (l *llock) Acquire(breaker Breaker, slot uint32) error {
+func (l *llock) Acquire(breaker internal.Breaker, slot uint32) error {
 	if slot == 0 {
 		return InvalidIntent
 	}
