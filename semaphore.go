@@ -16,7 +16,7 @@ func Limited(capacity uint) *llock {
 
 type llock struct {
 	state  uint64
-	lock   sync.RWMutex
+	guard  sync.RWMutex
 	signal chan struct{}
 }
 
@@ -33,14 +33,50 @@ func (lock *llock) Acquire(breaker internal.Breaker, slot uint32) error {
 	if slot == 0 {
 		return InvalidIntent
 	}
-	return nil
+	for {
+		select {
+		case <-breaker.Done():
+			return Interrupted
+		default:
+		}
+		state, count, limit := lock.splitState()
+		if newCount := count + slot; newCount <= limit {
+			if atomic.CompareAndSwapUint64(&lock.state, state, uint64(limit<<32+newCount)) {
+				return nil
+			}
+			continue
+		}
+		lock.guard.RLock()
+		signal := lock.signal
+		lock.guard.RUnlock()
+
+		if atomic.LoadUint64(&lock.state) != state {
+			continue
+		}
+
+		select {
+		case <-breaker.Done():
+			return Interrupted
+		case <-signal:
+			// potentially have a place
+		}
+	}
 }
 
 func (lock *llock) TryAcquire(slot uint32) bool {
 	if slot == 0 {
 		return false
 	}
-	return true
+	for {
+		state, count, limit := lock.splitState()
+		if newCount := count + slot; newCount <= limit {
+			if atomic.CompareAndSwapUint64(&lock.state, state, uint64(limit<<32+newCount)) {
+				return true
+			}
+			continue
+		}
+		return false
+	}
 }
 
 func (lock *llock) Release(slot uint32) uint32 {
@@ -63,4 +99,9 @@ func (lock *llock) SetLimit(limit uint32) uint32 {
 		return lock.Limit()
 	}
 	return 0
+}
+
+func (lock *llock) splitState() (uint64, uint32, uint32) {
+	state := atomic.LoadUint64(&lock.state)
+	return state, uint32(state), uint32(state >> 32)
 }
