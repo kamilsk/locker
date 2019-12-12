@@ -25,8 +25,8 @@ func (lock *llock) Lock(breaker internal.Breaker) error {
 }
 
 func (lock *llock) Unlock(internal.Breaker) error {
-	_ = lock.Release(lock.Limit())
-	return nil
+	_, err := lock.Release(lock.Limit())
+	return err
 }
 
 func (lock *llock) Acquire(breaker internal.Breaker, slot uint32) error {
@@ -39,6 +39,7 @@ func (lock *llock) Acquire(breaker internal.Breaker, slot uint32) error {
 			return Interrupted
 		default:
 		}
+
 		state, count, limit := lock.splitState()
 		if newCount := count + slot; newCount <= limit {
 			if atomic.CompareAndSwapUint64(&lock.state, state, uint64(limit<<32+newCount)) {
@@ -46,6 +47,7 @@ func (lock *llock) Acquire(breaker internal.Breaker, slot uint32) error {
 			}
 			continue
 		}
+
 		lock.guard.RLock()
 		signal := lock.signal
 		lock.guard.RUnlock()
@@ -79,11 +81,28 @@ func (lock *llock) TryAcquire(slot uint32) bool {
 	}
 }
 
-func (lock *llock) Release(slot uint32) uint32 {
+func (lock *llock) Release(slot uint32) (uint32, error) {
 	if slot == 0 {
-		return lock.Count()
+		return lock.Count(), nil
 	}
-	return 0
+	for {
+		state, count, limit := lock.splitState()
+		if count < slot {
+			return count, InvalidIntent
+		}
+
+		if newCount := count - slot; atomic.CompareAndSwapUint64(&lock.state, state, uint64(limit<<32+newCount)) {
+			signal := make(chan struct{})
+
+			lock.guard.Lock()
+			broadcast := lock.signal
+			lock.signal = signal
+			lock.guard.Unlock()
+
+			close(broadcast)
+			return count, nil
+		}
+	}
 }
 
 func (lock *llock) Count() uint32 {
@@ -94,14 +113,28 @@ func (lock *llock) Limit() uint32 {
 	return uint32(atomic.LoadUint64(&lock.state) >> 32)
 }
 
-func (lock *llock) SetLimit(limit uint32) uint32 {
-	if limit == 0 {
+func (lock *llock) SetCapacity(capacity uint32) uint32 {
+	if capacity == 0 {
 		return lock.Limit()
 	}
-	return 0
+
+	for {
+		state, count, limit := lock.splitState()
+		if atomic.CompareAndSwapUint64(&lock.state, state, uint64(capacity<<32+count)) {
+			signal := make(chan struct{})
+
+			lock.guard.Lock()
+			broadcast := lock.signal
+			lock.signal = signal
+			lock.guard.Unlock()
+
+			close(broadcast)
+			return limit
+		}
+	}
 }
 
-func (lock *llock) splitState() (uint64, uint32, uint32) {
-	state := atomic.LoadUint64(&lock.state)
+func (lock *llock) splitState() (state uint64, count uint32, limit uint32) {
+	state = atomic.LoadUint64(&lock.state)
 	return state, uint32(state), uint32(state >> 32)
 }

@@ -29,7 +29,7 @@ type SafeLock interface {
 type Semaphore interface {
 	Acquire(Breaker, uint32) error
 	TryAcquire(uint32) bool
-	Release(uint32) uint32
+	Release(uint32) (uint32, error)
 }
 
 type Observable interface {
@@ -38,5 +38,5 @@ type Observable interface {
 }
 
 type Resizable interface {
-	SetLimit(uint32) uint32
+	SetCapacity(uint32) uint32
 }
