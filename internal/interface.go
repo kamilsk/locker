@@ -14,15 +14,16 @@ type BreakCloser interface {
 	Close()
 }
 
-// A SafeLock carries of getting an exclusive lock to access
+// A Interruptible carries of getting an exclusive lock to access
 // a critical section with the ability to interrupt the action.
-type SafeLock interface {
-	// Lock locks a mutex. If the lock is already in use,
-	// the calling goroutine blocks until the mutex is available
-	// or an error occurred.
+type Interruptible interface {
+	// Lock takes an exclusive lock. If the lock is already in use,
+	// the calling goroutine blocks until the mutex is available or
+	// an error occurred, e.g. if the Breaker is done.
 	Lock(Breaker) error
-	// Unlock unlocks a mutex. It could return an error if the mutex
-	// is not locked on entry to Unlock.
+	// Unlock releases an exclusive lock. It could return an error
+	// if the mutex is not locked on entry to Unlock or
+	// the Breaker is done.
 	Unlock(Breaker) error
 }
 

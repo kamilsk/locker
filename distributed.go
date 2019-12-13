@@ -1,8 +1,12 @@
 package locker
 
-import "github.com/kamilsk/locker/internal"
+import (
+	"time"
 
-func Distributed() *dlock {
+	"github.com/kamilsk/locker/internal"
+)
+
+func Distributed(ttl time.Duration) *dlock {
 	return &dlock{}
 }
 

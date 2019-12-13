@@ -7,6 +7,11 @@ import (
 	"github.com/kamilsk/locker/internal"
 )
 
+// Limited returns a new instance of resizable semaphore
+// and non-blocking mutex.
+//
+// Fully reworked of github.com/kamilsk/semaphore,
+// inspired by github.com/marusama/semaphore.
 func Limited(capacity uint) *llock {
 	return &llock{
 		state:  uint64(capacity) << 32,
