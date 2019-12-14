@@ -3,6 +3,9 @@ package locker_test
 import (
 	"context"
 	"flag"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -12,6 +15,35 @@ import (
 )
 
 var timeout = flag.Duration("timeout", time.Second, "use custom timeout, e.g. to debug")
+
+func ExampleInterruptible() {
+	data, lock := []string{"1 ", "2 ", "3 ", "4"}, Interruptible()
+
+	var handler http.HandlerFunc = func(rw http.ResponseWriter, req *http.Request) {
+		if err := lock.Lock(req.Context()); err != nil {
+			http.Error(rw, http.StatusText(http.StatusRequestTimeout), http.StatusRequestTimeout)
+			return
+		}
+		_, _ = rw.Write([]byte(data[0]))
+		data = data[1:]
+		if err := lock.Unlock(req.Context()); err != nil {
+			go func() { _ = lock.Unlock(context.Background()) }()
+		}
+	}
+
+	rec, wg := httptest.NewRecorder(), &sync.WaitGroup{}
+	wg.Add(len(data))
+	for range data {
+		go func() {
+			handler.ServeHTTP(rec, &http.Request{})
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+
+	_, _ = rec.Body.WriteTo(os.Stdout)
+	// output: 1 2 3 4
+}
 
 func TestInterruptible(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)

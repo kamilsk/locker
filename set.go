@@ -8,18 +8,68 @@ import (
 	"github.com/kamilsk/locker/internal"
 )
 
-func Set(capacity uint, options ...SetOption) *mset {
-	set := &mset{set: make([]sync.Mutex, capacity), size: uint64(capacity)}
+func InterruptibleSet(capacity uint, options ...InterruptibleSetOption) *iset {
+	container := &iset{set: make([]ilock, 0, capacity), size: uint64(capacity)}
+	for range make([]struct{}, capacity) {
+		container.set = append(container.set, *Interruptible())
+	}
 	for _, option := range options {
-		option(set)
+		option(container)
 	}
-	if set.hash == nil {
-		set.hash = md5.New
+	if container.hash == nil {
+		container.hash = md5.New
 	}
-	if set.idx == nil {
-		set.idx = internal.ShardNumberFast
+	if container.idx == nil {
+		container.idx = internal.ShardNumberFast
 	}
-	return set
+	return container
+}
+
+type InterruptibleSetOption func(*iset)
+
+func InterruptibleSetWithHash(builder func() hash.Hash) InterruptibleSetOption {
+	return func(c *iset) { c.hash = builder }
+}
+
+func InterruptibleSetWithMapping(index func([]byte, uint64) uint64) InterruptibleSetOption {
+	return func(c *iset) { c.idx = index }
+}
+
+type iset struct {
+	hash func() hash.Hash
+	idx  func([]byte, uint64) uint64
+	set  []ilock
+	size uint64
+}
+
+func (c *iset) ByFingerprint(fingerprint []byte) *ilock {
+	h := c.hash()
+	_, _ = h.Write(fingerprint)
+	shard := c.idx(h.Sum(nil), c.size)
+	h.Reset()
+	return &c.set[shard]
+}
+
+func (c *iset) ByKey(key string) *ilock {
+	return c.ByFingerprint([]byte(key))
+}
+
+func (c *iset) ByVirtualShard(shard uint64) *ilock {
+	return &c.set[shard%c.size]
+}
+
+func Set(capacity uint, options ...SetOption) *mset {
+	container := &mset{set: make([]sync.Mutex, capacity), size: uint64(capacity)}
+	for _, option := range options {
+		option(container)
+	}
+	if container.hash == nil {
+		container.hash = md5.New
+	}
+	if container.idx == nil {
+		container.idx = internal.ShardNumberFast
+	}
+	return container
 }
 
 type SetOption func(*mset)
@@ -56,17 +106,17 @@ func (c *mset) ByVirtualShard(shard uint64) *sync.Mutex {
 }
 
 func RWSet(capacity uint, options ...RWSetOption) *rwset {
-	set := &rwset{set: make([]sync.RWMutex, capacity), size: uint64(capacity)}
+	container := &rwset{set: make([]sync.RWMutex, capacity), size: uint64(capacity)}
 	for _, option := range options {
-		option(set)
+		option(container)
 	}
-	if set.hash == nil {
-		set.hash = md5.New
+	if container.hash == nil {
+		container.hash = md5.New
 	}
-	if set.idx == nil {
-		set.idx = internal.ShardNumberFast
+	if container.idx == nil {
+		container.idx = internal.ShardNumberFast
 	}
-	return set
+	return container
 }
 
 type RWSetOption func(*rwset)
