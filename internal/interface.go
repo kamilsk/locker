@@ -14,9 +14,9 @@ type BreakCloser interface {
 	Close()
 }
 
-// A Interruptible carries of getting an exclusive lock to access
+// A Locker carries of getting an exclusive lock to access
 // a critical section with the ability to interrupt the action.
-type Interruptible interface {
+type Locker interface {
 	// Lock takes an exclusive lock. If the lock is already in use,
 	// the calling goroutine blocks until the mutex is available or
 	// an error occurred, e.g. if the Breaker is done.
@@ -27,10 +27,33 @@ type Interruptible interface {
 	Unlock(Breaker) error
 }
 
+// A FastLocker is a Locker with a possibility to take an exclusive lock
+// fast or failure if it not possible at that moment.
+type FastLocker interface {
+	Locker
+	// TryLock is a fail-fast version of the Lock method.
+	// It returns true if the mutex is locked by the calling goroutine
+	// or false otherwise.
+	TryLock() bool
+}
+
+// A SafeLocker is a Locker with a guarantee that the unlock operation
+// is achievable in a finite time.
+type SafeLocker interface {
+	Locker
+	// MustUnlock is a fail-fast version of the Unlock method.
+	// It is a runtime error if the mutex is not locked on entry to Unlock.
+	MustUnlock()
+}
+
 type Semaphore interface {
 	Acquire(Breaker, uint32) error
-	TryAcquire(uint32) bool
 	Release(uint32) (uint32, error)
+}
+
+type FastSemaphore interface {
+	Semaphore
+	TryAcquire(uint32) bool
 }
 
 type Observable interface {

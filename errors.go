@@ -8,10 +8,10 @@ func (err Error) Error() string {
 	return string(err)
 }
 
-// CriticalIssue is the error related to bad module usage.
+// CriticalIssue is the error related to a bad module usage.
 const CriticalIssue Error = "critical issue"
 
-// Interrupted is the error related to timeout.
+// Interrupted is the error related to a timeout.
 const Interrupted Error = "operation interrupted"
 
 // InvalidIntent is the error related to a bad method call.

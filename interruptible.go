@@ -11,11 +11,9 @@ import "github.com/kamilsk/locker/internal"
 //  		http.Error(rw, http.StatusText(http.StatusRequestTimeout), http.StatusRequestTimeout)
 //  		return
 //  	}
+//  	defer lock.MustUnlock()
 //  	// critical section with lock protection
-//  	if err := lock.Unlock(req.Context()); err != nil {
-//  		// timeout occurred or connection is broken, but we must unlock it anyway
-//  		go func() { _ = lock.Unlock(context.Background()) }()
-//  	}
+//  	// only one goroutine can be here one moment in time
 //  }
 //
 func Interruptible() *ilock {
@@ -37,16 +35,54 @@ func (lock *ilock) Lock(breaker internal.Breaker) error {
 	}
 }
 
+// TryLock is a fail-fast version of the Lock method.
+// It returns true if the mutex is locked by the calling goroutine
+// or false otherwise.
+func (lock *ilock) TryLock() bool {
+	select {
+	case *lock <- struct{}{}:
+		return true
+	default:
+		return false
+	}
+}
+
 // Unlock releases an exclusive lock. It could return an error
 // if the mutex is not locked on entry to Unlock or
-// the Breaker is done.
+// the Breaker is done. In this case the calling goroutine
+// needs to release the mutex in background.
 //
-// The CriticalIssue error is an important part of the mutex API.
+//  var handler http.HandlerFunc = func(rw http.ResponseWriter, req *http.Request) {
+//  	if err := lock.Lock(req.Context()); err != nil {
+//  		http.Error(rw, http.StatusText(http.StatusRequestTimeout), http.StatusRequestTimeout)
+//  		return
+//  	}
+//  	// critical section with lock protection
+//  	// only one goroutine can be here one moment in time
+//  	if err := lock.Unlock(req.Context()); err != nil {
+//  		// timeout occurred or connection is broken,
+//  		// but we need to release the mutex anyway
+//  		go lock.Unlock(context.Background())
+//  		// or go lock.MustUnlock()
+//  	}
+//  }
+//
 func (lock *ilock) Unlock(breaker internal.Breaker) error {
 	select {
 	case <-breaker.Done():
-		return CriticalIssue
+		return InvalidIntent
 	case <-*lock:
 		return nil
+	}
+}
+
+// MustUnlock is a fail-fast version of the Unlock method.
+// It is a runtime error if the mutex is not locked on entry to Unlock.
+func (lock *ilock) MustUnlock() {
+	select {
+	case <-*lock:
+		return
+	default:
+		panic(CriticalIssue)
 	}
 }
