@@ -2,7 +2,6 @@ package locker_test
 
 import (
 	"context"
-	"flag"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -11,10 +10,8 @@ import (
 	"time"
 
 	. "github.com/kamilsk/locker"
-	. "github.com/kamilsk/locker/internal"
+	"github.com/kamilsk/locker/internal"
 )
-
-var timeout = flag.Duration("timeout", time.Second, "use custom timeout, e.g. to debug")
 
 func ExampleInterruptible() {
 	data, lock := []string{"1 ", "2 ", "3 ", "4"}, Interruptible()
@@ -123,8 +120,14 @@ func TestInterruptible(t *testing.T) {
 			t.FailNow()
 		}
 	})
+}
 
-	t.Run("stress test", func(t *testing.T) {
+func TestInterruptible_StressTest(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
+	defer cancel()
+
+	lock := Interruptible()
+	if *stress {
 		wg := sync.WaitGroup{}
 		for range make([]struct{}, 1000) {
 			wg.Add(1)
@@ -141,7 +144,7 @@ func TestInterruptible(t *testing.T) {
 			}()
 		}
 		wg.Wait()
-	})
+	}
 }
 
 // BenchmarkInterruptible/interruptible_locker-4         	 7418108	       156 ns/op	       0 B/op	       0 allocs/op
@@ -150,7 +153,7 @@ func BenchmarkInterruptible(b *testing.B) {
 	ctx := context.Background()
 
 	b.Run("interruptible locker", func(b *testing.B) {
-		var lock Locker = Interruptible()
+		var lock internal.Locker = Interruptible()
 
 		b.ReportAllocs()
 		b.ResetTimer()

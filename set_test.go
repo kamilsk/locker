@@ -3,7 +3,6 @@ package locker_test
 import (
 	"crypto/md5"
 	"crypto/sha1"
-	"flag"
 	"hash"
 	"math"
 	"runtime"
@@ -11,8 +10,6 @@ import (
 
 	. "github.com/kamilsk/locker"
 )
-
-var stress = flag.Bool("stress-test", false, "run stress tests")
 
 func TestInterruptibleSet(t *testing.T) {
 	t.Run("with custom hash option", func(t *testing.T) {
@@ -32,6 +29,8 @@ func TestInterruptibleSet(t *testing.T) {
 }
 
 func TestInterruptibleSet_ByFingerprint(t *testing.T) {
+	t.Parallel()
+
 	fingerprints := [...][]byte{[]byte(runtime.GOOS), []byte(runtime.GOARCH)}
 	set := InterruptibleSet(3)
 
@@ -59,6 +58,8 @@ func TestInterruptibleSet_ByFingerprint(t *testing.T) {
 }
 
 func TestInterruptibleSet_ByKey(t *testing.T) {
+	t.Parallel()
+
 	keys := [...]string{runtime.GOOS, runtime.GOARCH}
 	set := InterruptibleSet(3)
 
@@ -86,6 +87,8 @@ func TestInterruptibleSet_ByKey(t *testing.T) {
 }
 
 func TestInterruptibleSet_ByVirtualShard(t *testing.T) {
+	t.Parallel()
+
 	shards := [...]uint64{1, 5, 9}
 	set := InterruptibleSet(3)
 
@@ -113,13 +116,12 @@ func TestInterruptibleSet_ByVirtualShard(t *testing.T) {
 }
 
 func TestInterruptibleSet_StressTest(t *testing.T) {
-	if !*stress {
-		t.SkipNow()
-	}
-	for range make([]struct{}, 1000) {
-		TestInterruptibleSet_ByFingerprint(t)
-		TestInterruptibleSet_ByKey(t)
-		TestInterruptibleSet_ByVirtualShard(t)
+	if *stress {
+		for range make([]struct{}, 1000) {
+			t.Run("by fingerprint", TestInterruptibleSet_ByFingerprint)
+			t.Run("by key", TestInterruptibleSet_ByKey)
+			t.Run("by virtual shard", TestInterruptibleSet_ByVirtualShard)
+		}
 	}
 }
 
@@ -213,6 +215,8 @@ func TestSet(t *testing.T) {
 }
 
 func TestSet_ByFingerprint(t *testing.T) {
+	t.Parallel()
+
 	fingerprints := [...][]byte{[]byte(runtime.GOOS), []byte(runtime.GOARCH)}
 	set := Set(3)
 
@@ -240,6 +244,8 @@ func TestSet_ByFingerprint(t *testing.T) {
 }
 
 func TestSet_ByKey(t *testing.T) {
+	t.Parallel()
+
 	keys := [...]string{runtime.GOOS, runtime.GOARCH}
 	set := Set(3)
 
@@ -267,6 +273,8 @@ func TestSet_ByKey(t *testing.T) {
 }
 
 func TestSet_ByVirtualShard(t *testing.T) {
+	t.Parallel()
+
 	shards := [...]uint64{1, 5, 9}
 	set := Set(3)
 
@@ -294,13 +302,12 @@ func TestSet_ByVirtualShard(t *testing.T) {
 }
 
 func TestSet_StressTest(t *testing.T) {
-	if !*stress {
-		t.SkipNow()
-	}
-	for range make([]struct{}, 1000) {
-		TestSet_ByFingerprint(t)
-		TestSet_ByKey(t)
-		TestSet_ByVirtualShard(t)
+	if *stress {
+		for range make([]struct{}, 1000) {
+			t.Run("by fingerprint", TestSet_ByFingerprint)
+			t.Run("by key", TestSet_ByKey)
+			t.Run("by virtual shard", TestSet_ByVirtualShard)
+		}
 	}
 }
 
@@ -394,6 +401,8 @@ func TestRWSet(t *testing.T) {
 }
 
 func TestRWSet_ByFingerprint(t *testing.T) {
+	t.Parallel()
+
 	fingerprints := [...][]byte{[]byte(runtime.GOOS), []byte(runtime.GOARCH)}
 	set := RWSet(3)
 
@@ -421,6 +430,8 @@ func TestRWSet_ByFingerprint(t *testing.T) {
 }
 
 func TestRWSet_ByKey(t *testing.T) {
+	t.Parallel()
+
 	keys := [...]string{runtime.GOOS, runtime.GOARCH}
 	set := RWSet(3)
 
@@ -448,6 +459,8 @@ func TestRWSet_ByKey(t *testing.T) {
 }
 
 func TestRWSet_ByVirtualShard(t *testing.T) {
+	t.Parallel()
+
 	shards := [...]uint64{1, 5, 9}
 	set := RWSet(3)
 
@@ -475,13 +488,12 @@ func TestRWSet_ByVirtualShard(t *testing.T) {
 }
 
 func TestRWSet_StressTest(t *testing.T) {
-	if !*stress {
-		t.SkipNow()
-	}
-	for range make([]struct{}, 1000) {
-		TestRWSet_ByFingerprint(t)
-		TestRWSet_ByKey(t)
-		TestRWSet_ByVirtualShard(t)
+	if *stress {
+		for range make([]struct{}, 1000) {
+			t.Run("by fingerprint", TestRWSet_ByFingerprint)
+			t.Run("by key", TestRWSet_ByKey)
+			t.Run("by virtual shard", TestRWSet_ByVirtualShard)
+		}
 	}
 }
 

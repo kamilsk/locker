@@ -54,8 +54,7 @@ func sumModWithoutOverflow(a, b, d uint64) uint64 {
 		// 2. a + b > d ?
 		//      a > d -b
 		return d - ((d - a) + (d - b))
-	} else {
-		// 3. a + b == d
-		return 0
 	}
+	// 3. a + b == d
+	return 0
 }

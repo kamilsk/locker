@@ -1,3 +1,5 @@
+// +build genome
+
 package set
 
 import (

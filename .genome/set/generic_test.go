@@ -1,3 +1,5 @@
+// +build genome
+
 package set_test
 
 import (
@@ -32,6 +34,8 @@ func TestNewContainer(t *testing.T) {
 }
 
 func TestContainer_ByFingerprint(t *testing.T) {
+	t.Parallel()
+
 	fingerprints := [...][]byte{[]byte(runtime.GOOS), []byte(runtime.GOARCH)}
 	container := NewContainer(3)
 
@@ -59,6 +63,8 @@ func TestContainer_ByFingerprint(t *testing.T) {
 }
 
 func TestContainer_ByKey(t *testing.T) {
+	t.Parallel()
+
 	keys := [...]string{runtime.GOOS, runtime.GOARCH}
 	container := NewContainer(3)
 
@@ -86,6 +92,8 @@ func TestContainer_ByKey(t *testing.T) {
 }
 
 func TestContainer_ByVirtualShard(t *testing.T) {
+	t.Parallel()
+
 	shards := [...]uint64{1, 5, 9}
 	container := NewContainer(3)
 
@@ -113,13 +121,12 @@ func TestContainer_ByVirtualShard(t *testing.T) {
 }
 
 func TestContainer_StressTest(t *testing.T) {
-	if !*stress {
-		t.SkipNow()
-	}
-	for range make([]struct{}, 1000) {
-		TestContainer_ByFingerprint(t)
-		TestContainer_ByKey(t)
-		TestContainer_ByVirtualShard(t)
+	if *stress {
+		for range make([]struct{}, 1000) {
+			t.Run("by fingerprint", TestContainer_ByFingerprint)
+			t.Run("by key", TestContainer_ByKey)
+			t.Run("by virtual shard", TestContainer_ByVirtualShard)
+		}
 	}
 }
 
