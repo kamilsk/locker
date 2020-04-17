@@ -5,23 +5,27 @@ import (
 	"crypto/sha1"
 	"hash"
 	"math"
-	"runtime"
 	"testing"
 
 	. "github.com/kamilsk/locker"
 )
 
+const (
+	key1 = "key#1"
+	key2 = "key#2"
+)
+
 func TestInterruptibleSet(t *testing.T) {
 	t.Run("with custom hash option", func(t *testing.T) {
 		container := InterruptibleSet(3, InterruptibleSetWithHash(sha1.New))
-		if container.ByKey(runtime.GOOS) == container.ByKey(runtime.GOARCH) {
+		if container.ByKey(key1) == container.ByKey(key2) {
 			t.Error("unexpected result")
 			t.FailNow()
 		}
 	})
 	t.Run("with custom mapping option", func(t *testing.T) {
 		container := InterruptibleSet(3, InterruptibleSetWithMapping(func([]byte, uint64) uint64 { return 0 }))
-		if container.ByKey(runtime.GOOS) != container.ByKey(runtime.GOARCH) {
+		if container.ByKey(key1) != container.ByKey(key2) {
 			t.Error("unexpected result")
 			t.FailNow()
 		}
@@ -31,7 +35,7 @@ func TestInterruptibleSet(t *testing.T) {
 func TestInterruptibleSet_ByFingerprint(t *testing.T) {
 	t.Parallel()
 
-	fingerprints := [...][]byte{[]byte(runtime.GOOS), []byte(runtime.GOARCH)}
+	fingerprints := [...][]byte{[]byte(key1), []byte(key2)}
 	set := InterruptibleSet(3)
 
 	for _, fingerprint := range fingerprints {
@@ -60,7 +64,7 @@ func TestInterruptibleSet_ByFingerprint(t *testing.T) {
 func TestInterruptibleSet_ByKey(t *testing.T) {
 	t.Parallel()
 
-	keys := [...]string{runtime.GOOS, runtime.GOARCH}
+	keys := [...]string{key1, key2}
 	set := InterruptibleSet(3)
 
 	for _, key := range keys {
@@ -135,7 +139,7 @@ func BenchmarkInterruptibleSet_ByFingerprint(b *testing.B) {
 		{name: "md5", hash: md5.New},
 		{name: "sha1", hash: sha1.New},
 	}
-	fingerprint := []byte(runtime.GOOS)
+	fingerprint := []byte(key1)
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
 			set := InterruptibleSet(3, InterruptibleSetWithHash(bm.hash))
@@ -159,7 +163,7 @@ func BenchmarkInterruptibleSet_ByKey(b *testing.B) {
 		{name: "md5", hash: md5.New},
 		{name: "sha1", hash: sha1.New},
 	}
-	key := runtime.GOOS
+	key := key1
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
 			set := InterruptibleSet(3, InterruptibleSetWithHash(bm.hash))
@@ -200,14 +204,14 @@ func BenchmarkInterruptibleSet_ByVirtualShard(b *testing.B) {
 func TestSet(t *testing.T) {
 	t.Run("with custom hash option", func(t *testing.T) {
 		container := Set(3, SetWithHash(sha1.New))
-		if container.ByKey(runtime.GOOS) == container.ByKey(runtime.GOARCH) {
+		if container.ByKey(key1) == container.ByKey(key2) {
 			t.Error("unexpected result")
 			t.FailNow()
 		}
 	})
 	t.Run("with custom mapping option", func(t *testing.T) {
 		container := Set(3, SetWithMapping(func([]byte, uint64) uint64 { return 0 }))
-		if container.ByKey(runtime.GOOS) != container.ByKey(runtime.GOARCH) {
+		if container.ByKey(key1) != container.ByKey(key2) {
 			t.Error("unexpected result")
 			t.FailNow()
 		}
@@ -217,7 +221,7 @@ func TestSet(t *testing.T) {
 func TestSet_ByFingerprint(t *testing.T) {
 	t.Parallel()
 
-	fingerprints := [...][]byte{[]byte(runtime.GOOS), []byte(runtime.GOARCH)}
+	fingerprints := [...][]byte{[]byte(key1), []byte(key2)}
 	set := Set(3)
 
 	for _, fingerprint := range fingerprints {
@@ -246,7 +250,7 @@ func TestSet_ByFingerprint(t *testing.T) {
 func TestSet_ByKey(t *testing.T) {
 	t.Parallel()
 
-	keys := [...]string{runtime.GOOS, runtime.GOARCH}
+	keys := [...]string{key1, key2}
 	set := Set(3)
 
 	for _, key := range keys {
@@ -321,7 +325,7 @@ func BenchmarkSet_ByFingerprint(b *testing.B) {
 		{name: "md5", hash: md5.New},
 		{name: "sha1", hash: sha1.New},
 	}
-	fingerprint := []byte(runtime.GOOS)
+	fingerprint := []byte(key1)
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
 			set := Set(3, SetWithHash(bm.hash))
@@ -345,7 +349,7 @@ func BenchmarkSet_ByKey(b *testing.B) {
 		{name: "md5", hash: md5.New},
 		{name: "sha1", hash: sha1.New},
 	}
-	key := runtime.GOOS
+	key := key1
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
 			set := Set(3, SetWithHash(bm.hash))
@@ -386,14 +390,14 @@ func BenchmarkSet_ByVirtualShard(b *testing.B) {
 func TestRWSet(t *testing.T) {
 	t.Run("with custom hash option", func(t *testing.T) {
 		container := RWSet(3, RWSetWithHash(sha1.New))
-		if container.ByKey(runtime.GOOS) == container.ByKey(runtime.GOARCH) {
+		if container.ByKey(key1) == container.ByKey(key2) {
 			t.Error("unexpected result")
 			t.FailNow()
 		}
 	})
 	t.Run("with custom mapping option", func(t *testing.T) {
 		container := RWSet(3, RWSetWithMapping(func([]byte, uint64) uint64 { return 0 }))
-		if container.ByKey(runtime.GOOS) != container.ByKey(runtime.GOARCH) {
+		if container.ByKey(key1) != container.ByKey(key2) {
 			t.Error("unexpected result")
 			t.FailNow()
 		}
@@ -403,7 +407,7 @@ func TestRWSet(t *testing.T) {
 func TestRWSet_ByFingerprint(t *testing.T) {
 	t.Parallel()
 
-	fingerprints := [...][]byte{[]byte(runtime.GOOS), []byte(runtime.GOARCH)}
+	fingerprints := [...][]byte{[]byte(key1), []byte(key2)}
 	set := RWSet(3)
 
 	for _, fingerprint := range fingerprints {
@@ -432,7 +436,7 @@ func TestRWSet_ByFingerprint(t *testing.T) {
 func TestRWSet_ByKey(t *testing.T) {
 	t.Parallel()
 
-	keys := [...]string{runtime.GOOS, runtime.GOARCH}
+	keys := [...]string{key1, key2}
 	set := RWSet(3)
 
 	for _, key := range keys {
@@ -507,7 +511,7 @@ func BenchmarkRWSet_ByFingerprint(b *testing.B) {
 		{name: "md5", hash: md5.New},
 		{name: "sha1", hash: sha1.New},
 	}
-	fingerprint := []byte(runtime.GOOS)
+	fingerprint := []byte(key1)
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
 			set := RWSet(3, RWSetWithHash(bm.hash))
@@ -531,7 +535,7 @@ func BenchmarkRWSet_ByKey(b *testing.B) {
 		{name: "md5", hash: md5.New},
 		{name: "sha1", hash: sha1.New},
 	}
-	key := runtime.GOOS
+	key := key1
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
 			set := RWSet(3, RWSetWithHash(bm.hash))
